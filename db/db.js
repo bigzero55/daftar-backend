@@ -20,7 +20,7 @@ let db = new sqlite3.Database(DBSOURCE, (err) => {
         status TEXT NOT NULL,
         shirtSize TEXT NOT NULL,
         role TEXT NOT NULL,
-        cekIn INTEGER NOT NULL,
+        cekIn,
         phone TEXT NOT NULL)`,
       (err) => {
         if (err) {
