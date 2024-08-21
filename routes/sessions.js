@@ -69,7 +69,7 @@ router.get("/:session_unix/not-scanned", (req, res) => {
   db.all(query, [sessionUnix], (err, rows) => {
     if (err) {
       res.status(400).json({ error: err.message });
-      return;
+      return;I
     }
     res.json(rows);
   });
