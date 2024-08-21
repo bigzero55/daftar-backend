@@ -36,6 +36,45 @@ router.get("/:id", (req, res) => {
   });
 });
 
+router.get("/:session_unix/scanned", (req, res) => {
+  const sessionUnix = req.params.session_unix;
+  const query = `
+    SELECT p.name, s.name AS session_name, sc.scanTime
+    FROM Participants p
+    JOIN Scanned sc ON p.id = sc.paticipant_id
+    JOIN Sessions s ON sc.session_id = s.id
+    WHERE s.unix = ?
+  `;
+  db.all(query, [sessionUnix], (err, rows) => {
+    if (err) {
+      res.status(400).json({ error: err.message });
+      return;
+    }
+    res.json(rows);
+  });
+});
+
+router.get("/:session_unix/not-scanned", (req, res) => {
+  const sessionUnix = req.params.session_unix;
+  const query = `
+    SELECT p.name
+    FROM Participants p
+    WHERE p.id NOT IN (
+      SELECT sc.paticipant_id
+      FROM Scanned sc
+      JOIN Sessions s ON sc.session_id = s.id
+      WHERE s.unix = ?
+    )
+  `;
+  db.all(query, [sessionUnix], (err, rows) => {
+    if (err) {
+      res.status(400).json({ error: err.message });
+      return;
+    }
+    res.json(rows);
+  });
+});
+
 router.post("/", (req, res) => {
   const { unix, name, desc } = req.body;
   const sql = `INSERT INTO Sessions (unix, name, desc) VALUES (?,?,?)`;
