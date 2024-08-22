@@ -36,6 +36,26 @@ router.get("/:id", (req, res) => {
   });
 });
 
+router.get("/barcode/:code", (req, res) => {
+  const { code } = req.params;
+  const sql = "SELECT * FROM Participants WHERE unix = ?";
+  const params = [code];
+  db.get(sql, params, (err, row) => {
+    if (err) {
+      res.status(400).json({ error: err.message });
+      return;
+    }
+    if (!row) {
+      res.status(404).json({ message: "Participant not found" });
+      return;
+    }
+    res.json({
+      message: "success",
+      data: row,
+    });
+  });
+});
+
 router.get("/search/:key", (req, res) => {
   const { key } = req.params;
   const sql = `
@@ -103,6 +123,91 @@ router.post("/", (req, res) => {
     });
   });
 
+  router.post("/import", (req, res) => {
+    const jsonData = req.body;
+
+    // Iterasi melalui data JSON dan masukkan ke dalam database SQLite
+    jsonData.forEach((data) => {
+      const {
+        unix,
+        transportation,
+        name,
+        city,
+        regTime,
+        status,
+        shirtSize,
+        role,
+        cekIn,
+        phone,
+      } = data;
+
+      const sql = `INSERT INTO Participants ( unix,
+      transportation,
+      name,
+      city,
+      regTime,
+      status,
+      shirtSize,
+      role,
+      cekIn,
+      phone) VALUES (?,?,?,?,?,?,?,?,?,?)`;
+      const params = [
+        unix,
+        transportation,
+        name,
+        city,
+        regTime,
+        status,
+        shirtSize,
+        role,
+        cekIn,
+        phone,
+      ];
+
+      db.run(sql, params, function (err) {
+        if (err) {
+          console.error("Error inserting data:", err.message);
+        } else {
+          console.log("Data inserted successfully with ID:", this.lastID);
+        }
+      });
+    });
+    res.json({ message: "Data imported successfully" });
+  });
+
+  router.put("/:id", (req, res) => {
+    const { id } = req.params;
+    const { name, transportation, city, phone, shirtSize, role } = req.body;
+
+    const sql = `UPDATE Participants SET 
+      name = ?, 
+      transportation = ?, 
+      city = ?, 
+      phone = ?, 
+      shirtSize = ?, 
+      role = ? 
+      WHERE id = ?`;
+
+    const params = [name, transportation, city, phone, shirtSize, role, id];
+
+    db.run(sql, params, function (err) {
+      if (err) {
+        res.status(400).json({ error: err.message });
+        return;
+      }
+
+      if (this.changes === 0) {
+        res.status(404).json({ message: "Participant not found" });
+        return;
+      }
+
+      res.json({
+        message: "success",
+        data: { id: id, changes: this.changes },
+      });
+    });
+  });
+
   router.delete("/:id", (req, res) => {
     const { id } = req.params;
     const sql = "DELETE FROM Participants WHERE id = ?";
@@ -117,59 +222,6 @@ router.post("/", (req, res) => {
       });
     });
   });
-});
-
-router.post("/import", (req, res) => {
-  const jsonData = req.body;
-
-  // Iterasi melalui data JSON dan masukkan ke dalam database SQLite
-  jsonData.forEach((data) => {
-    const {
-      unix,
-      transportation,
-      name,
-      city,
-      regTime,
-      status,
-      shirtSize,
-      role,
-      cekIn,
-      phone,
-    } = data;
-
-    const sql = `INSERT INTO Participants ( unix,
-    transportation,
-    name,
-    city,
-    regTime,
-    status,
-    shirtSize,
-    role,
-    cekIn,
-    phone) VALUES (?,?,?,?,?,?,?,?,?,?)`;
-    const params = [
-      unix,
-      transportation,
-      name,
-      city,
-      regTime,
-      status,
-      shirtSize,
-      role,
-      cekIn,
-      phone,
-    ];
-
-    db.run(sql, params, function (err) {
-      if (err) {
-        console.error("Error inserting data:", err.message);
-      } else {
-        console.log("Data inserted successfully with ID:", this.lastID);
-      }
-    });
-  });
-
-  res.json({ message: "Data imported successfully" });
 });
 
 module.exports = router;

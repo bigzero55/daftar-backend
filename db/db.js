@@ -44,11 +44,11 @@ let db = new sqlite3.Database(DBSOURCE, (err) => {
     );
 
     db.run(
-      `CREATE TABLE IF NOT EXISTS Validator (
+      `CREATE TABLE IF NOT EXISTS Validators (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 name TEXT NOT NULL,
-                paticipant_id INTEGER,
-                FOREIGN KEY(paticipant_id) REFERENCES Participants(id)
+                participant_id INTEGER,
+                FOREIGN KEY(participant_id) REFERENCES Participants(id)
             )`,
       (err) => {
         if (err) {
@@ -61,10 +61,10 @@ let db = new sqlite3.Database(DBSOURCE, (err) => {
       `CREATE TABLE IF NOT EXISTS Scanned (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 scanTime INTEGER NOT NULL,
-                paticipant_id INTEGER,
+                participant_id INTEGER,
                 validator_id INTEGER,
                 session_id INTEGER,
-                FOREIGN KEY(paticipant_id) REFERENCES Participants(id),
+                FOREIGN KEY(participant_id) REFERENCES Participants(id),
         FOREIGN KEY(validator_id) REFERENCES Validator(id),
         FOREIGN KEY(session_id) REFERENCES Sessions(id)
             )`,

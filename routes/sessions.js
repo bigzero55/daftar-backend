@@ -39,9 +39,9 @@ router.get("/:id", (req, res) => {
 router.get("/:session_unix/scanned", (req, res) => {
   const sessionUnix = req.params.session_unix;
   const query = `
-    SELECT p.name, s.name AS session_name, sc.scanTime
+    SELECT p.name, p.city, p.phone, p.role, s.name AS session_name, sc.scanTime
     FROM Participants p
-    JOIN Scanned sc ON p.id = sc.paticipant_id
+    JOIN Scanned sc ON p.id = sc.participant_id
     JOIN Sessions s ON sc.session_id = s.id
     WHERE s.unix = ?
   `;
@@ -60,7 +60,7 @@ router.get("/:session_unix/not-scanned", (req, res) => {
     SELECT p.name
     FROM Participants p
     WHERE p.id NOT IN (
-      SELECT sc.paticipant_id
+      SELECT sc.participant_id
       FROM Scanned sc
       JOIN Sessions s ON sc.session_id = s.id
       WHERE s.unix = ?
@@ -88,6 +88,52 @@ router.post("/", (req, res) => {
     res.json({
       message: "success",
       data: { id: this.lastID },
+    });
+  });
+});
+
+router.put("/:id", (req, res) => {
+  const { id } = req.params;
+  const { unix, name, desc } = req.body;
+  const sql = `UPDATE Sessions SET unix = ?, name = ?, desc = ? WHERE id = ?`;
+  const params = [unix, name, desc, id];
+
+  db.run(sql, params, function (err) {
+    if (err) {
+      res.status(400).json({ error: err.message });
+      return;
+    }
+
+    if (this.changes === 0) {
+      res.status(404).json({ message: "Session not found" });
+      return;
+    }
+
+    res.json({
+      message: "success",
+      data: { id: id, changes: this.changes },
+    });
+  });
+});
+
+router.delete("/:id", (req, res) => {
+  const { id } = req.params;
+  const sql = `DELETE FROM Sessions WHERE id = ?`;
+
+  db.run(sql, id, function (err) {
+    if (err) {
+      res.status(400).json({ error: err.message });
+      return;
+    }
+
+    if (this.changes === 0) {
+      res.status(404).json({ message: "Session not found" });
+      return;
+    }
+
+    res.json({
+      message: "success",
+      data: { id: id, changes: this.changes },
     });
   });
 });
