@@ -18,7 +18,7 @@ router.get("/", (req, res) => {
 
 router.get("/:id", (req, res) => {
   const { id } = req.params;
-  const sql = "SELECT * FROM Partcipants WHERE id = ?";
+  const sql = "SELECT * FROM Sessions WHERE id = ?";
   const params = [id];
   db.get(sql, params, (err, row) => {
     if (err) {
@@ -69,7 +69,8 @@ router.get("/:session_unix/not-scanned", (req, res) => {
   db.all(query, [sessionUnix], (err, rows) => {
     if (err) {
       res.status(400).json({ error: err.message });
-      return;I
+      return;
+      I;
     }
     res.json(rows);
   });
@@ -91,4 +92,4 @@ router.post("/", (req, res) => {
   });
 });
 
-module.exports = router; 
+module.exports = router;

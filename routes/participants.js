@@ -43,7 +43,7 @@ router.get("/search/:key", (req, res) => {
     WHERE 
         name LIKE ?
   `;
-  const params = [key];
+  const params = [`%${key}%`];
 
   db.all(sql, params, (err, rows) => {
     if (err) {
