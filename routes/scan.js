@@ -33,7 +33,7 @@ router.post("/validasi", (req, res) => {
             return;
           }
           res.json({
-            message: "Scan successfully recorded",
+            message: "success",
             scanId: this.lastID,
           });
         }

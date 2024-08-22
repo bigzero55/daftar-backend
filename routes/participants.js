@@ -172,7 +172,7 @@ router.post("/", (req, res) => {
         }
       });
     });
-    res.json({ message: "Data imported successfully" });
+    res.json({ message: "success" });
   });
 
   router.put("/:id", (req, res) => {
@@ -217,7 +217,7 @@ router.post("/", (req, res) => {
         return;
       }
       res.json({
-        message: "deleted",
+        message: "success",
         data: { id: id },
       });
     });
