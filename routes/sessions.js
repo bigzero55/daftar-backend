@@ -39,11 +39,12 @@ router.get("/:id", (req, res) => {
 router.get("/:session_unix/scanned", (req, res) => {
   const sessionUnix = req.params.session_unix;
   const query = `
-    SELECT p.name, p.city, p.phone, p.role, s.name AS session_name, sc.scanTime
-    FROM Participants p
-    JOIN Scanned sc ON p.id = sc.participant_id
-    JOIN Sessions s ON sc.session_id = s.id
-    WHERE s.unix = ?
+    SELECT p.name, p.city, p.phone, p.role, s.name AS session_name, sc.scanTime, v.name AS validator_name
+        FROM Participants p
+        JOIN Scanned sc ON p.id = sc.participant_id
+        JOIN Sessions s ON sc.session_id = s.id
+        LEFT JOIN Validators v ON sc.validator_id = v.id
+        WHERE s.unix = ?
   `;
   db.all(query, [sessionUnix], (err, rows) => {
     if (err) {
@@ -57,7 +58,7 @@ router.get("/:session_unix/scanned", (req, res) => {
 router.get("/:session_unix/not-scanned", (req, res) => {
   const sessionUnix = req.params.session_unix;
   const query = `
-    SELECT p.name
+    SELECT p.name, p.city, p.phone, p.role,
     FROM Participants p
     WHERE p.id NOT IN (
       SELECT sc.participant_id
