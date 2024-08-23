@@ -36,6 +36,26 @@ router.get("/:id", (req, res) => {
   });
 });
 
+router.get("/unix/:id", (req, res) => {
+  const { id } = req.params;
+  const sql = "SELECT * FROM Sessions WHERE unix = ?";
+  const params = [id];
+  db.get(sql, params, (err, row) => {
+    if (err) {
+      res.status(400).json({ error: err.message });
+      return;
+    }
+    if (!row) {
+      res.status(404).json({ message: "Session not found" });
+      return;
+    }
+    res.json({
+      message: "success",
+      data: row,
+    });
+  });
+});
+
 router.get("/:session_unix/scanned", (req, res) => {
   const sessionUnix = req.params.session_unix;
   const query = `
@@ -58,7 +78,7 @@ router.get("/:session_unix/scanned", (req, res) => {
 router.get("/:session_unix/not-scanned", (req, res) => {
   const sessionUnix = req.params.session_unix;
   const query = `
-    SELECT p.name, p.city, p.phone, p.role,
+    SELECT p.name, p.city, p.phone, p.role
     FROM Participants p
     WHERE p.id NOT IN (
       SELECT sc.participant_id
@@ -95,9 +115,9 @@ router.post("/", (req, res) => {
 
 router.put("/:id", (req, res) => {
   const { id } = req.params;
-  const { unix, name, desc } = req.body;
-  const sql = `UPDATE Sessions SET unix = ?, name = ?, desc = ? WHERE id = ?`;
-  const params = [unix, name, desc, id];
+  const { name, desc } = req.body;
+  const sql = `UPDATE Sessions SET name = ?, desc = ? WHERE id = ?`;
+  const params = [name, desc, id];
 
   db.run(sql, params, function (err) {
     if (err) {
@@ -118,24 +138,45 @@ router.put("/:id", (req, res) => {
 });
 
 router.delete("/:id", (req, res) => {
-  const { id } = req.params;
-  const sql = `DELETE FROM Sessions WHERE id = ?`;
+  const sessionId = req.params.id;
 
-  db.run(sql, id, function (err) {
-    if (err) {
-      res.status(400).json({ error: err.message });
-      return;
-    }
+  // Mulai transaksi
+  db.serialize(() => {
+    db.run("BEGIN TRANSACTION");
 
-    if (this.changes === 0) {
-      res.status(404).json({ message: "Session not found" });
-      return;
-    }
+    // Hapus data dari tabel Scanned berdasarkan session_id
+    db.run(
+      `DELETE FROM Scanned WHERE session_id = ?`,
+      [sessionId],
+      function (err) {
+        if (err) {
+          db.run("ROLLBACK");
+          return res.status(500).json({ error: err.message });
+        }
 
-    res.json({
-      message: "success",
-      data: { id: id, changes: this.changes },
-    });
+        // Hapus data dari tabel Sessions berdasarkan id
+        db.run(
+          `DELETE FROM Sessions WHERE id = ?`,
+          [sessionId],
+          function (err) {
+            if (err) {
+              db.run("ROLLBACK");
+              return res.status(500).json({ error: err.message });
+            }
+
+            // Commit transaksi
+            db.run("COMMIT", (err) => {
+              if (err) {
+                return res.status(500).json({ error: err.message });
+              }
+              res.json({
+                message: `Session dengan id ${sessionId} dan data Scanned terkait telah dihapus.`,
+              });
+            });
+          }
+        );
+      }
+    );
   });
 });
 

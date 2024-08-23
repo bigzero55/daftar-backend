@@ -122,26 +122,15 @@ router.post("/", (req, res) => {
       data: { id: this.lastID },
     });
   });
+});
 
-  router.post("/import", (req, res) => {
-    const jsonData = req.body;
+router.post("/import", (req, res) => {
+  const jsonData = req.body;
 
-    // Iterasi melalui data JSON dan masukkan ke dalam database SQLite
-    jsonData.forEach((data) => {
-      const {
-        unix,
-        transportation,
-        name,
-        city,
-        regTime,
-        status,
-        shirtSize,
-        role,
-        cekIn,
-        phone,
-      } = data;
-
-      const sql = `INSERT INTO Participants ( unix,
+  // Iterasi melalui data JSON dan masukkan ke dalam database SQLite
+  jsonData.forEach((data) => {
+    const {
+      unix,
       transportation,
       name,
       city,
@@ -150,76 +139,86 @@ router.post("/", (req, res) => {
       shirtSize,
       role,
       cekIn,
-      phone) VALUES (?,?,?,?,?,?,?,?,?,?)`;
-      const params = [
-        unix,
-        transportation,
-        name,
-        city,
-        regTime,
-        status,
-        shirtSize,
-        role,
-        cekIn,
-        phone,
-      ];
+      phone,
+    } = data;
 
-      db.run(sql, params, function (err) {
-        if (err) {
-          console.error("Error inserting data:", err.message);
-        } else {
-          console.log("Data inserted successfully with ID:", this.lastID);
-        }
-      });
+    const sql = `INSERT INTO Participants ( unix,
+    transportation,
+    name,
+    city,
+    regTime,
+    status,
+    shirtSize,
+    role,
+    cekIn,
+    phone) VALUES (?,?,?,?,?,?,?,?,?,?)`;
+    const params = [
+      unix,
+      transportation,
+      name,
+      city,
+      regTime,
+      status,
+      shirtSize,
+      role,
+      cekIn,
+      phone,
+    ];
+
+    db.run(sql, params, function (err) {
+      if (err) {
+        console.error("Error inserting data:", err.message);
+      } else {
+        console.log("Data inserted successfully with ID:", this.lastID);
+      }
     });
-    res.json({ message: "success" });
   });
+  res.json({ message: "success" });
+});
 
-  router.put("/:id", (req, res) => {
-    const { id } = req.params;
-    const { name, transportation, city, phone, shirtSize, role } = req.body;
+router.put("/:id", (req, res) => {
+  const { id } = req.params;
+  const { name, transportation, city, phone, shirtSize } = req.body;
 
-    const sql = `UPDATE Participants SET 
+  const sql = `UPDATE Participants SET 
       name = ?, 
       transportation = ?, 
       city = ?, 
       phone = ?, 
-      shirtSize = ?, 
-      role = ? 
+      shirtSize = ? 
       WHERE id = ?`;
 
-    const params = [name, transportation, city, phone, shirtSize, role, id];
+  const params = [name, transportation, city, phone, shirtSize, id];
 
-    db.run(sql, params, function (err) {
-      if (err) {
-        res.status(400).json({ error: err.message });
-        return;
-      }
+  db.run(sql, params, function (err) {
+    if (err) {
+      res.status(400).json({ error: err.message });
+      return;
+    }
 
-      if (this.changes === 0) {
-        res.status(404).json({ message: "Participant not found" });
-        return;
-      }
+    if (this.changes === 0) {
+      res.status(404).json({ message: "Participant not found" });
+      return;
+    }
 
-      res.json({
-        message: "success",
-        data: { id: id, changes: this.changes },
-      });
+    res.json({
+      message: "success",
+      data: { id: id, changes: this.changes },
     });
   });
+});
 
-  router.delete("/:id", (req, res) => {
-    const { id } = req.params;
-    const sql = "DELETE FROM Participants WHERE id = ?";
-    db.run(sql, id, function (err) {
-      if (err) {
-        res.status(400).json({ error: err.message });
-        return;
-      }
-      res.json({
-        message: "success",
-        data: { id: id },
-      });
+router.delete("/:id", (req, res) => {
+  const { id } = req.params;
+  const sql = "DELETE FROM Participants WHERE id = ?";
+  db.run(sql, id, function (err) {
+    if (err) {
+      res.status(400).json({ error: err.message });
+      return;
+    }
+    res.json({
+      message: "success",
+      data: { id: id },
     });
   });
 });
